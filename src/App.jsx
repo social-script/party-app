@@ -224,6 +224,15 @@ export default function PartyApp() {
             const response = await fetch(url, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+
+            if (response.status === 401 || response.status === 403) {
+                console.warn('Playlist fetch failed (401/403). Token likely missing scopes.');
+                // Do not alert inside the loop to avoid spam, but we should handle this.
+                // For now, let's break and maybe set a flag or rely on the user re-logging in.
+                // Ideally, throw an error to be caught by the caller
+                throw new Error('AUTH_ERROR');
+            }
+
             const data = await response.json();
 
             if (data.items) {
@@ -285,7 +294,12 @@ export default function PartyApp() {
             setView('party');
         } catch (error) {
             console.error('Error creating party:', error);
-            alert('Failed to create Songclash. Please try again.');
+            if (error.message === 'AUTH_ERROR') {
+                alert('Please logout and login again to grant new permissions for playlist access.');
+                logout();
+            } else {
+                alert('Failed to create Songclash. Please try again.');
+            }
         }
         setLoading(false);
     }
@@ -328,7 +342,12 @@ export default function PartyApp() {
             setView('party');
         } catch (error) {
             console.error('Error joining party:', error);
-            alert('Failed to join Songclash. Please try again.');
+            if (error.message === 'AUTH_ERROR') {
+                alert('Please logout and login again to grant new permissions for playlist access.');
+                logout();
+            } else {
+                alert('Failed to join Songclash. Please try again.');
+            }
         }
         setLoading(false);
     }
