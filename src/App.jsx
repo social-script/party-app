@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Music, Share2, LogOut, Loader2 } from 'lucide-react';
+import { db } from './firebase';
+import { ref, set, get, update, onValue } from 'firebase/database';
 
+// TODO: Replace with your Spotify Client ID
 const CLIENT_ID = '2e236609e1664658baf7c693a9de776f';
 const REDIRECT_URI = window.location.origin;
 const SCOPES = 'user-library-read user-read-private user-read-email';
@@ -18,6 +21,26 @@ export default function PartyApp() {
     useEffect(() => {
         handleAuth();
     }, []);
+
+    // Listen for party updates when in a party
+    useEffect(() => {
+        if (partyCode && view === 'party') {
+            const partyRef = ref(db, `parties/${partyCode}`);
+            const unsubscribe = onValue(partyRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    setPartySession(data);
+                } else {
+                    alert('Party ended or does not exist.');
+                    setView('menu');
+                    setPartyCode('');
+                    setPartySession(null);
+                }
+            });
+
+            return () => unsubscribe();
+        }
+    }, [partyCode, view]);
 
     // Handle Spotify OAuth
     async function handleAuth() {
@@ -161,7 +184,8 @@ export default function PartyApp() {
                 createdAt: Date.now(),
             };
 
-            savePartyToStorage(code, party);
+            await set(ref(db, `parties/${code}`), party);
+
             setPartyCode(code);
             setPartySession(party);
             setView('party');
@@ -178,25 +202,35 @@ export default function PartyApp() {
             const songs = await fetchAllLikedSongs(accessToken);
             setLikedSongs(songs);
 
-            const party = loadPartyFromStorage(code);
-            if (!party) {
+            const partyRef = ref(db, `parties/${code}`);
+            const snapshot = await get(partyRef);
+
+            if (!snapshot.exists()) {
                 alert('Party not found. Please check the code.');
                 setLoading(false);
                 return;
             }
 
+            const party = snapshot.val();
             const existingMember = party.members.find(m => m.id === currentUser.id);
+
             if (!existingMember) {
-                party.members.push({
+                const newMember = {
                     id: currentUser.id,
                     name: currentUser.display_name,
                     likedSongs: songs.map(s => s.id),
-                });
-                savePartyToStorage(code, party);
+                };
+
+                const updatedMembers = [...party.members, newMember];
+                await update(partyRef, { members: updatedMembers });
+
+                // Update local state immediately (though onValue will also catch it)
+                setPartySession({ ...party, members: updatedMembers });
+            } else {
+                setPartySession(party);
             }
 
             setPartyCode(code);
-            setPartySession(party);
             setView('party');
         } catch (error) {
             console.error('Error joining party:', error);
@@ -209,26 +243,19 @@ export default function PartyApp() {
         return Math.random().toString(36).substring(2, 8).toUpperCase();
     }
 
-    function savePartyToStorage(code, party) {
-        localStorage.setItem(`party:${code}`, JSON.stringify(party));
-    }
-
-    function loadPartyFromStorage(code) {
-        const data = localStorage.getItem(`party:${code}`);
-        return data ? JSON.parse(data) : null;
-    }
-
     function calculateMatches() {
-        if (!partySession || partySession.members.length < 2) return null;
+        if (!partySession || !partySession.members || partySession.members.length < 2) return null;
 
         const allSongIds = {};
         partySession.members.forEach(member => {
-            member.likedSongs.forEach(songId => {
-                if (!allSongIds[songId]) {
-                    allSongIds[songId] = [];
-                }
-                allSongIds[songId].push(member.name);
-            });
+            if (member.likedSongs) {
+                member.likedSongs.forEach(songId => {
+                    if (!allSongIds[songId]) {
+                        allSongIds[songId] = [];
+                    }
+                    allSongIds[songId].push(member.name);
+                });
+            }
         });
 
         const sharedSongs = Object.entries(allSongIds)
@@ -242,17 +269,19 @@ export default function PartyApp() {
         const groups = [];
         partySession.members.forEach((member, i) => {
             partySession.members.slice(i + 1).forEach(otherMember => {
-                const common = member.likedSongs.filter(s =>
-                    otherMember.likedSongs.includes(s)
-                );
-                if (common.length > 0) {
-                    groups.push({
-                        members: [member.name, otherMember.name],
-                        commonSongs: common.length,
-                        percentage: Math.round(
-                            (common.length / Math.min(member.likedSongs.length, otherMember.likedSongs.length)) * 100
-                        ),
-                    });
+                if (member.likedSongs && otherMember.likedSongs) {
+                    const common = member.likedSongs.filter(s =>
+                        otherMember.likedSongs.includes(s)
+                    );
+                    if (common.length > 0) {
+                        groups.push({
+                            members: [member.name, otherMember.name],
+                            commonSongs: common.length,
+                            percentage: Math.round(
+                                (common.length / Math.min(member.likedSongs.length, otherMember.likedSongs.length)) * 100
+                            ),
+                        });
+                    }
                 }
             });
         });
@@ -416,7 +445,7 @@ export default function PartyApp() {
                                 {partySession?.members.map(member => (
                                     <div key={member.id} className="bg-white/10 rounded-lg p-4">
                                         <p className="text-white font-semibold">{member.name}</p>
-                                        <p className="text-gray-400 text-sm">{member.likedSongs.length} liked songs</p>
+                                        <p className="text-gray-400 text-sm">{member.likedSongs ? member.likedSongs.length : 0} liked songs</p>
                                     </div>
                                 ))}
                             </div>
