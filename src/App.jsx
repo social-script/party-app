@@ -331,7 +331,9 @@ export default function PartyApp() {
             });
 
             if (!createResponse.ok) {
-                throw new Error('Failed to create playlist');
+                const errorData = await createResponse.json();
+                console.error('Spotify API Error:', errorData);
+                throw new Error(`Failed to create playlist: ${errorData.error?.message || createResponse.statusText}`);
             }
 
             const playlistData = await createResponse.json();
@@ -350,13 +352,15 @@ export default function PartyApp() {
             });
 
             if (!addTracksResponse.ok) {
-                throw new Error('Failed to add tracks');
+                const errorData = await addTracksResponse.json();
+                console.error('Spotify API Error (Add Tracks):', errorData);
+                throw new Error(`Failed to add tracks: ${errorData.error?.message || addTracksResponse.statusText}`);
             }
 
             alert(`Playlist "${playlistData.name}" created successfully!`);
         } catch (error) {
             console.error('Error creating playlist:', error);
-            alert('Failed to create playlist. Make sure you have granted the necessary permissions (try logging out and back in).');
+            alert(`Error: ${error.message}`);
         }
         setLoading(false);
     }
