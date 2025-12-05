@@ -53,7 +53,7 @@ export default function PartyApp() {
                 if (data) {
                     setPartySession(data);
                 } else {
-                    alert('Song Clash ended or does not exist.');
+                    alert('Songclash ended or does not exist.');
                     setView('menu');
                     setPartyCode('');
                     setPartySession(null);
@@ -213,7 +213,7 @@ export default function PartyApp() {
             setView('party');
         } catch (error) {
             console.error('Error creating party:', error);
-            alert('Failed to create Song Clash. Please try again.');
+            alert('Failed to create Songclash. Please try again.');
         }
         setLoading(false);
     }
@@ -228,7 +228,7 @@ export default function PartyApp() {
             const snapshot = await get(partyRef);
 
             if (!snapshot.exists()) {
-                alert('Song Clash not found. Please check the code.');
+                alert('Songclash not found. Please check the code.');
                 setLoading(false);
                 return;
             }
@@ -256,7 +256,7 @@ export default function PartyApp() {
             setView('party');
         } catch (error) {
             console.error('Error joining party:', error);
-            alert('Failed to join Song Clash. Please try again.');
+            alert('Failed to join Songclash. Please try again.');
         }
         setLoading(false);
     }
@@ -362,8 +362,8 @@ export default function PartyApp() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    name: `SongClash Party ${partyCode}`,
-                    description: `A shared playlist created by SongClash for party ${partyCode}.`,
+                    name: `Songclash Party ${partyCode}`,
+                    description: `A shared playlist created by Songclash for party ${partyCode}.`,
                     public: false,
                 }),
             });

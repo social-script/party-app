@@ -31,16 +31,16 @@ export default function MenuView({
                 <div className="grid md:grid-cols-2 gap-6">
                     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 hover:bg-white/20 transition-all cursor-pointer" onClick={onCreateParty}>
                         <Users className="w-16 h-16 text-green-400 mb-4" />
-                        <h3 className="text-2xl font-bold text-white mb-2">Create Song Clash</h3>
-                        <p className="text-gray-300">Start a new Song Clash session and invite your friends</p>
+                        <h3 className="text-2xl font-bold text-white mb-2">Create Songclash</h3>
+                        <p className="text-gray-300">Start a new Songclash session and invite your friends</p>
                     </div>
 
                     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
                         <Share2 className="w-16 h-16 text-blue-400 mb-4" />
-                        <h3 className="text-2xl font-bold text-white mb-4">Join Song Clash</h3>
+                        <h3 className="text-2xl font-bold text-white mb-4">Join Songclash</h3>
                         <input
                             type="text"
-                            placeholder="Enter Song Clash code"
+                            placeholder="Enter Songclash code"
                             className="w-full bg-white/20 text-white placeholder-gray-400 px-4 py-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-blue-400"
                             value={partyCode}
                             onChange={(e) => setPartyCode(e.target.value.toUpperCase())}
