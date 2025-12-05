@@ -9,7 +9,7 @@ import PartyView from './components/PartyView';
 // TODO: Replace with your Spotify Client ID
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = window.location.origin;
-const SCOPES = 'user-library-read user-read-private user-read-email playlist-modify-public playlist-modify-private';
+const SCOPES = 'user-library-read user-read-private user-read-email playlist-modify-public playlist-modify-private playlist-read-private playlist-read-collaborative';
 
 export default function PartyApp() {
     const [view, setView] = useState('welcome');
@@ -188,10 +188,82 @@ export default function PartyApp() {
         return allTracks;
     }
 
+    async function fetchUserMusic(token) {
+        // 1. Fetch Liked Songs
+        const liked = await fetchAllLikedSongs(token);
+
+        // 2. Fetch Playlists
+        setLoadingMessage('Fetching your playlists...');
+        const playlists = await fetchAllPlaylists(token);
+
+        // 3. Fetch Tracks from Playlists
+        let allTracks = [...liked];
+        const seenIds = new Set(liked.map(s => s.id));
+
+        for (let i = 0; i < playlists.length; i++) {
+            setLoadingMessage(`Scanning playlist ${i + 1}/${playlists.length}: ${playlists[i].name}`);
+            const playlistTracks = await fetchTracksFromPlaylist(token, playlists[i].id);
+
+            playlistTracks.forEach(track => {
+                if (!seenIds.has(track.id)) {
+                    seenIds.add(track.id);
+                    allTracks.push(track);
+                    seenIds.add(track.id); // Ensure we mark it as seen
+                }
+            });
+        }
+
+        return allTracks;
+    }
+
+    async function fetchAllPlaylists(token) {
+        const playlists = [];
+        let url = 'https://api.spotify.com/v1/me/playlists?limit=50';
+
+        while (url) {
+            const response = await fetch(url, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+
+            if (data.items) {
+                playlists.push(...data.items);
+            }
+            url = data.next;
+        }
+        return playlists;
+    }
+
+    async function fetchTracksFromPlaylist(token, playlistId) {
+        const tracks = [];
+        let url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=50&fields=items(track(id,name,uri,artists(name))),next`;
+
+        while (url) {
+            const response = await fetch(url, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+
+            if (data.items) {
+                const validTracks = data.items
+                    .filter(item => item.track && item.track.id)
+                    .map(item => ({
+                        id: item.track.id,
+                        name: item.track.name,
+                        artists: item.track.artists.map(a => a.name).join(', '),
+                        uri: item.track.uri,
+                    }));
+                tracks.push(...validTracks);
+            }
+            url = data.next;
+        }
+        return tracks;
+    }
+
     async function createParty() {
         setLoading(true);
         try {
-            const songs = await fetchAllLikedSongs(accessToken);
+            const songs = await fetchUserMusic(accessToken);
             setLikedSongs(songs);
 
             const code = generatePartyCode();
@@ -221,7 +293,7 @@ export default function PartyApp() {
     async function joinParty(code) {
         setLoading(true);
         try {
-            const songs = await fetchAllLikedSongs(accessToken);
+            const songs = await fetchUserMusic(accessToken);
             setLikedSongs(songs);
 
             const partyRef = ref(db, `parties/${code}`);
