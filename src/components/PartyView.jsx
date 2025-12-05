@@ -21,21 +21,13 @@ export default function PartyView({
                             <button
                                 onClick={() => {
                                     const url = `${window.location.origin}?join=${partyCode}`;
-                                    if (navigator.share) {
-                                        navigator.share({
-                                            title: 'Join my SongClash Party!',
-                                            text: `Let's see if we have the same music taste! 🎵 Join with code: ${partyCode}`,
-                                            url: url
-                                        }).catch(console.error);
-                                    } else {
-                                        navigator.clipboard.writeText(url);
-                                        alert('Song Clash link copied to clipboard!');
-                                    }
+                                    const text = encodeURIComponent(`Let's see if we have the same music taste! 🎵 Join my Song Clash with code: ${partyCode}\n${url}`);
+                                    window.open(`https://wa.me/?text=${text}`, '_blank');
                                 }}
                                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold transition-all"
                             >
                                 <Share2 className="w-4 h-4" />
-                                Invite Friends
+                                Share on WhatsApp
                             </button>
                         </div>
                     </div>

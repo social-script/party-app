@@ -262,7 +262,12 @@ export default function PartyApp() {
     }
 
     function generatePartyCode() {
-        return Math.random().toString(36).substring(2, 8).toUpperCase();
+        let code = '';
+        const possible = '123456789';
+        for (let i = 0; i < 6; i++) {
+            code += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+        return code;
     }
 
     function calculateMatches() {
