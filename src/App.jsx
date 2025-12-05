@@ -23,6 +23,11 @@ export default function PartyApp() {
     async function handleAuth() {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
+        const joinCode = params.get('join');
+
+        if (joinCode) {
+            localStorage.setItem('joinCode', joinCode);
+        }
 
         if (code) {
             setLoading(true);
@@ -34,6 +39,13 @@ export default function PartyApp() {
                 setCurrentUser(profile);
                 window.history.replaceState({}, document.title, '/');
                 setView('menu');
+
+                // Check for pending join code
+                const pendingJoinCode = localStorage.getItem('joinCode');
+                if (pendingJoinCode) {
+                    setPartyCode(pendingJoinCode);
+                    localStorage.removeItem('joinCode');
+                }
             } catch (error) {
                 console.error('Auth error:', error);
                 alert('Authentication failed. Please try again.');
@@ -366,7 +378,28 @@ export default function PartyApp() {
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h1 className="text-4xl font-bold text-white mb-2">Party Session</h1>
-                            <p className="text-xl text-gray-300">Code: <span className="font-mono bg-white/20 px-3 py-1 rounded">{partyCode}</span></p>
+                            <div className="flex items-center gap-4">
+                                <p className="text-xl text-gray-300">Code: <span className="font-mono bg-white/20 px-3 py-1 rounded">{partyCode}</span></p>
+                                <button
+                                    onClick={() => {
+                                        const url = `${window.location.origin}?join=${partyCode}`;
+                                        if (navigator.share) {
+                                            navigator.share({
+                                                title: 'Join my SongClash Party!',
+                                                text: `Let's see if we have the same music taste! 🎵 Join with code: ${partyCode}`,
+                                                url: url
+                                            }).catch(console.error);
+                                        } else {
+                                            navigator.clipboard.writeText(url);
+                                            alert('Party link copied to clipboard!');
+                                        }
+                                    }}
+                                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold transition-all"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    Invite Friends
+                                </button>
+                            </div>
                         </div>
                         <button onClick={() => setView('menu')} className="text-gray-400 hover:text-white">
                             <LogOut className="w-6 h-6" />
