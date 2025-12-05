@@ -46,7 +46,7 @@ export default function PartyView({
                             {partySession?.members.map(member => (
                                 <div key={member.id} className="bg-white/10 rounded-lg p-4">
                                     <p className="text-white font-semibold">{member.name}</p>
-                                    <p className="text-gray-400 text-sm">{member.likedSongs ? member.likedSongs.length : 0} liked songs</p>
+                                    <p className="text-gray-400 text-sm">{member.likedSongs ? member.likedSongs.length : 0} songs</p>
                                 </div>
                             ))}
                         </div>

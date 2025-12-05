@@ -331,11 +331,16 @@ export default function PartyApp() {
 
                 const updatedMembers = [...party.members, newMember];
                 await update(partyRef, { members: updatedMembers });
-
-                // Update local state immediately (though onValue will also catch it)
                 setPartySession({ ...party, members: updatedMembers });
             } else {
-                setPartySession(party);
+                // Update existing member with new songs
+                const updatedMembers = party.members.map(m =>
+                    m.id === currentUser.id
+                        ? { ...m, likedSongs: songs.map(s => s.id) }
+                        : m
+                );
+                await update(partyRef, { members: updatedMembers });
+                setPartySession({ ...party, members: updatedMembers });
             }
 
             setPartyCode(code);
