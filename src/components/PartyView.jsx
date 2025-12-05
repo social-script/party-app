@@ -104,6 +104,9 @@ export default function PartyView({
                         <p className="text-gray-400">No shared songs yet. Invite more friends!</p>
                     )}
                 </div>
+                <div className="mt-8 text-center">
+                    <p className="text-gray-500 text-sm">Metadata provided by Spotify</p>
+                </div>
             </div>
         </div>
     );

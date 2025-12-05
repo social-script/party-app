@@ -55,6 +55,9 @@ export default function MenuView({
                         </button>
                     </div>
                 </div>
+                <div className="mt-12 text-center">
+                    <p className="text-gray-500 text-sm">Metadata provided by Spotify</p>
+                </div>
             </div>
         </div>
     );
