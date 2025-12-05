@@ -53,7 +53,7 @@ export default function PartyApp() {
                 if (data) {
                     setPartySession(data);
                 } else {
-                    alert('Party ended or does not exist.');
+                    alert('Song Clash ended or does not exist.');
                     setView('menu');
                     setPartyCode('');
                     setPartySession(null);
@@ -213,7 +213,7 @@ export default function PartyApp() {
             setView('party');
         } catch (error) {
             console.error('Error creating party:', error);
-            alert('Failed to create party. Please try again.');
+            alert('Failed to create Song Clash. Please try again.');
         }
         setLoading(false);
     }
@@ -228,7 +228,7 @@ export default function PartyApp() {
             const snapshot = await get(partyRef);
 
             if (!snapshot.exists()) {
-                alert('Party not found. Please check the code.');
+                alert('Song Clash not found. Please check the code.');
                 setLoading(false);
                 return;
             }
@@ -256,7 +256,7 @@ export default function PartyApp() {
             setView('party');
         } catch (error) {
             console.error('Error joining party:', error);
-            alert('Failed to join party. Please try again.');
+            alert('Failed to join Song Clash. Please try again.');
         }
         setLoading(false);
     }

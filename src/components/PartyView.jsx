@@ -15,7 +15,7 @@ export default function PartyView({
             <div className="max-w-6xl mx-auto">
                 <div className="flex justify-between items-center mb-8">
                     <div>
-                        <h1 className="text-4xl font-bold text-white mb-2">Party Session</h1>
+                        <h1 className="text-4xl font-bold text-white mb-2">Song Clash Session</h1>
                         <div className="flex items-center gap-4">
                             <p className="text-xl text-gray-300">Code: <span className="font-mono bg-white/20 px-3 py-1 rounded">{partyCode}</span></p>
                             <button
@@ -29,7 +29,7 @@ export default function PartyView({
                                         }).catch(console.error);
                                     } else {
                                         navigator.clipboard.writeText(url);
-                                        alert('Party link copied to clipboard!');
+                                        alert('Song Clash link copied to clipboard!');
                                     }
                                 }}
                                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold transition-all"
@@ -48,7 +48,7 @@ export default function PartyView({
                     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
                         <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
                             <Users className="w-6 h-6 text-green-400" />
-                            Party Members ({partySession?.members.length})
+                            Song Clash Members ({partySession?.members.length})
                         </h3>
                         <div className="space-y-3">
                             {partySession?.members.map(member => (
@@ -81,7 +81,7 @@ export default function PartyView({
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-2xl font-bold text-white flex items-center gap-2">
                             <Music className="w-6 h-6 text-purple-400" />
-                            Party Playlist ({playlist.length} songs, ~{totalMinutes} minutes)
+                            Song Clash Playlist ({playlist.length} songs, ~{totalMinutes} minutes)
                         </h3>
                         {playlist.length > 0 && (
                             <button
