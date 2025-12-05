@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Music, Share2, LogOut, Loader2 } from 'lucide-react';
+import { Users, Music, Share2, LogOut, Loader2, PlusCircle } from 'lucide-react';
 import { db } from './firebase';
 import { ref, set, get, update, onValue } from 'firebase/database';
 
 // TODO: Replace with your Spotify Client ID
 const CLIENT_ID = '2e236609e1664658baf7c693a9de776f';
 const REDIRECT_URI = window.location.origin;
-const SCOPES = 'user-library-read user-read-private user-read-email';
+const SCOPES = 'user-library-read user-read-private user-read-email playlist-modify-public playlist-modify-private';
 
 export default function PartyApp() {
     const [view, setView] = useState('welcome');
@@ -305,6 +305,62 @@ export default function PartyApp() {
         return playlistSongs.slice(0, Math.min(targetCount, playlistSongs.length));
     }
 
+    async function createSpotifyPlaylist() {
+        const playlist = createPlaylist();
+        if (playlist.length === 0) {
+            alert('No shared songs to add to playlist!');
+            return;
+        }
+
+        setLoading(true);
+        setLoadingMessage('Creating Spotify playlist...');
+
+        try {
+            // 1. Create Playlist
+            const createResponse = await fetch(`https://api.spotify.com/v1/users/${currentUser.id}/playlists`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: `SongClash Party ${partyCode}`,
+                    description: `A shared playlist created by SongClash for party ${partyCode}.`,
+                    public: false,
+                }),
+            });
+
+            if (!createResponse.ok) {
+                throw new Error('Failed to create playlist');
+            }
+
+            const playlistData = await createResponse.json();
+
+            // 2. Add Tracks
+            const trackUris = playlist.map(song => song.uri);
+            const addTracksResponse = await fetch(`https://api.spotify.com/v1/playlists/${playlistData.id}/tracks`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    uris: trackUris,
+                }),
+            });
+
+            if (!addTracksResponse.ok) {
+                throw new Error('Failed to add tracks');
+            }
+
+            alert(`Playlist "${playlistData.name}" created successfully!`);
+        } catch (error) {
+            console.error('Error creating playlist:', error);
+            alert('Failed to create playlist. Make sure you have granted the necessary permissions (try logging out and back in).');
+        }
+        setLoading(false);
+    }
+
     function logout() {
         setAccessToken(null);
         setCurrentUser(null);
@@ -469,10 +525,21 @@ export default function PartyApp() {
                     </div>
 
                     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
-                        <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                            <Music className="w-6 h-6 text-purple-400" />
-                            Party Playlist ({playlist.length} songs, ~{totalMinutes} minutes)
-                        </h3>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                                <Music className="w-6 h-6 text-purple-400" />
+                                Party Playlist ({playlist.length} songs, ~{totalMinutes} minutes)
+                            </h3>
+                            {playlist.length > 0 && (
+                                <button
+                                    onClick={createSpotifyPlaylist}
+                                    className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold transition-all"
+                                >
+                                    <PlusCircle className="w-4 h-4" />
+                                    Save to Spotify
+                                </button>
+                            )}
+                        </div>
                         {playlist.length > 0 ? (
                             <div className="space-y-2 max-h-96 overflow-y-auto">
                                 {playlist.map((song, i) => (
