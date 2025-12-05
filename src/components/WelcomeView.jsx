@@ -1,5 +1,6 @@
 import React from 'react';
 import { Music } from 'lucide-react';
+import spotifyIcon from '../assets/spotify-icon-white.png';
 
 export default function WelcomeView({ onLogin }) {
     return (
@@ -14,7 +15,7 @@ export default function WelcomeView({ onLogin }) {
                     onClick={onLogin}
                     className="bg-spotify-green hover:bg-[#1ed760] text-spotify-black font-bold py-4 px-8 rounded-full text-lg transition-all transform hover:scale-105 flex items-center justify-center gap-3 mx-auto"
                 >
-                    <img src="/src/assets/spotify-icon-white.png" alt="Spotify" className="w-8 h-8" />
+                    <img src={spotifyIcon} alt="Spotify" className="w-8 h-8" />
                     Login with Spotify
                 </button>
             </div>
