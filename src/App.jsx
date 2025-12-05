@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Music, Share2, LogOut, Loader2, PlusCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { db } from './firebase';
 import { ref, set, get, update, onValue } from 'firebase/database';
+import WelcomeView from './components/WelcomeView';
+import MenuView from './components/MenuView';
+import PartyView from './components/PartyView';
 
 // TODO: Replace with your Spotify Client ID
-const CLIENT_ID = '2e236609e1664658baf7c693a9de776f';
+const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = window.location.origin;
 const SCOPES = 'user-library-read user-read-private user-read-email playlist-modify-public playlist-modify-private';
 
@@ -19,8 +22,27 @@ export default function PartyApp() {
     const [loadingMessage, setLoadingMessage] = useState('');
 
     useEffect(() => {
+        // Restore state from localStorage
+        const storedUser = localStorage.getItem('currentUser');
+        const storedToken = localStorage.getItem('accessToken');
+        const storedCode = localStorage.getItem('partyCode');
+        const storedView = localStorage.getItem('view');
+
+        if (storedUser) setCurrentUser(JSON.parse(storedUser));
+        if (storedToken) setAccessToken(storedToken);
+        if (storedCode) setPartyCode(storedCode);
+        if (storedView) setView(storedView);
+
         handleAuth();
     }, []);
+
+    // Save state to localStorage
+    useEffect(() => {
+        if (currentUser) localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        if (accessToken) localStorage.setItem('accessToken', accessToken);
+        if (partyCode) localStorage.setItem('partyCode', partyCode);
+        if (view) localStorage.setItem('view', view);
+    }, [currentUser, accessToken, partyCode, view]);
 
     // Listen for party updates when in a party
     useEffect(() => {
@@ -267,21 +289,32 @@ export default function PartyApp() {
             }));
 
         const groups = [];
-        partySession.members.forEach((member, i) => {
-            partySession.members.slice(i + 1).forEach(otherMember => {
-                if (member.likedSongs && otherMember.likedSongs) {
-                    const common = member.likedSongs.filter(s =>
-                        otherMember.likedSongs.includes(s)
-                    );
-                    if (common.length > 0) {
-                        groups.push({
-                            members: [member.name, otherMember.name],
-                            commonSongs: common.length,
-                            percentage: Math.round(
-                                (common.length / Math.min(member.likedSongs.length, otherMember.likedSongs.length)) * 100
-                            ),
-                        });
+        const memberSets = partySession.members.map(m => ({
+            name: m.name,
+            songs: new Set(m.likedSongs || [])
+        }));
+
+        memberSets.forEach((member, i) => {
+            memberSets.slice(i + 1).forEach(otherMember => {
+                const [smaller, larger] = member.songs.size < otherMember.songs.size
+                    ? [member, otherMember]
+                    : [otherMember, member];
+
+                let commonCount = 0;
+                for (const song of smaller.songs) {
+                    if (larger.songs.has(song)) {
+                        commonCount++;
                     }
+                }
+
+                if (commonCount > 0) {
+                    groups.push({
+                        members: [member.name, otherMember.name],
+                        commonSongs: commonCount,
+                        percentage: Math.round(
+                            (commonCount / Math.min(member.songs.size, otherMember.songs.size)) * 100
+                        ),
+                    });
                 }
             });
         });
@@ -386,73 +419,20 @@ export default function PartyApp() {
     }
 
     if (view === 'welcome') {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black flex items-center justify-center p-4">
-                <div className="text-center max-w-2xl">
-                    <Music className="w-24 h-24 text-green-400 mx-auto mb-6" />
-                    <h1 className="text-6xl font-bold text-white mb-4">Song Clash</h1>
-                    <p className="text-xl text-gray-300 mb-8">
-                        Connect with friends through your shared music taste. Login with Spotify to automatically group with people who like the same songs!
-                    </p>
-                    <button
-                        onClick={redirectToSpotify}
-                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-full text-lg transition-all transform hover:scale-105"
-                    >
-                        Login with Spotify
-                    </button>
-                </div>
-            </div>
-        );
+        return <WelcomeView onLogin={redirectToSpotify} />;
     }
 
     if (view === 'menu') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black p-8">
-                <div className="max-w-4xl mx-auto">
-                    <div className="flex justify-between items-center mb-8">
-                        <div className="flex items-center gap-4">
-                            {currentUser?.images?.[0] && (
-                                <img src={currentUser.images[0].url} alt="Profile" className="w-16 h-16 rounded-full" />
-                            )}
-                            <div>
-                                <h2 className="text-2xl font-bold text-white">{currentUser?.display_name}</h2>
-                                <p className="text-gray-400">{likedSongs.length} liked songs</p>
-                            </div>
-                        </div>
-                        <button onClick={logout} className="text-gray-400 hover:text-white">
-                            <LogOut className="w-6 h-6" />
-                        </button>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 hover:bg-white/20 transition-all cursor-pointer" onClick={createParty}>
-                            <Users className="w-16 h-16 text-green-400 mb-4" />
-                            <h3 className="text-2xl font-bold text-white mb-2">Create Party</h3>
-                            <p className="text-gray-300">Start a new party session and invite your friends</p>
-                        </div>
-
-                        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
-                            <Share2 className="w-16 h-16 text-blue-400 mb-4" />
-                            <h3 className="text-2xl font-bold text-white mb-4">Join Party</h3>
-                            <input
-                                type="text"
-                                placeholder="Enter party code"
-                                className="w-full bg-white/20 text-white placeholder-gray-400 px-4 py-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-blue-400"
-                                value={partyCode}
-                                onChange={(e) => setPartyCode(e.target.value.toUpperCase())}
-                                maxLength={6}
-                            />
-                            <button
-                                onClick={() => joinParty(partyCode)}
-                                disabled={partyCode.length !== 6}
-                                className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-lg transition-all"
-                            >
-                                Join
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <MenuView
+                currentUser={currentUser}
+                likedSongsCount={likedSongs.length}
+                onCreateParty={createParty}
+                partyCode={partyCode}
+                setPartyCode={setPartyCode}
+                onJoinParty={joinParty}
+                onLogout={logout}
+            />
         );
     }
 
@@ -462,109 +442,15 @@ export default function PartyApp() {
         const totalMinutes = Math.round(playlist.length * 3.5);
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black p-8">
-                <div className="max-w-6xl mx-auto">
-                    <div className="flex justify-between items-center mb-8">
-                        <div>
-                            <h1 className="text-4xl font-bold text-white mb-2">Party Session</h1>
-                            <div className="flex items-center gap-4">
-                                <p className="text-xl text-gray-300">Code: <span className="font-mono bg-white/20 px-3 py-1 rounded">{partyCode}</span></p>
-                                <button
-                                    onClick={() => {
-                                        const url = `${window.location.origin}?join=${partyCode}`;
-                                        if (navigator.share) {
-                                            navigator.share({
-                                                title: 'Join my SongClash Party!',
-                                                text: `Let's see if we have the same music taste! 🎵 Join with code: ${partyCode}`,
-                                                url: url
-                                            }).catch(console.error);
-                                        } else {
-                                            navigator.clipboard.writeText(url);
-                                            alert('Party link copied to clipboard!');
-                                        }
-                                    }}
-                                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold transition-all"
-                                >
-                                    <Share2 className="w-4 h-4" />
-                                    Invite Friends
-                                </button>
-                            </div>
-                        </div>
-                        <button onClick={() => setView('menu')} className="text-gray-400 hover:text-white">
-                            <LogOut className="w-6 h-6" />
-                        </button>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-8 mb-8">
-                        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
-                            <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                                <Users className="w-6 h-6 text-green-400" />
-                                Party Members ({partySession?.members.length})
-                            </h3>
-                            <div className="space-y-3">
-                                {partySession?.members.map(member => (
-                                    <div key={member.id} className="bg-white/10 rounded-lg p-4">
-                                        <p className="text-white font-semibold">{member.name}</p>
-                                        <p className="text-gray-400 text-sm">{member.likedSongs ? member.likedSongs.length : 0} liked songs</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
-                            <h3 className="text-2xl font-bold text-white mb-4">Match Analysis</h3>
-                            {matches && matches.groups.length > 0 ? (
-                                <div className="space-y-3">
-                                    {matches.groups.map((group, i) => (
-                                        <div key={i} className="bg-white/10 rounded-lg p-4">
-                                            <p className="text-white font-semibold">{group.members.join(' & ')}</p>
-                                            <p className="text-green-400">{group.commonSongs} songs in common ({group.percentage}% match)</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-gray-400">Waiting for more members to join...</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                                <Music className="w-6 h-6 text-purple-400" />
-                                Party Playlist ({playlist.length} songs, ~{totalMinutes} minutes)
-                            </h3>
-                            {playlist.length > 0 && (
-                                <button
-                                    onClick={createSpotifyPlaylist}
-                                    className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold transition-all"
-                                >
-                                    <PlusCircle className="w-4 h-4" />
-                                    Save to Spotify
-                                </button>
-                            )}
-                        </div>
-                        {playlist.length > 0 ? (
-                            <div className="space-y-2 max-h-96 overflow-y-auto">
-                                {playlist.map((song, i) => (
-                                    <div key={i} className="bg-white/10 rounded-lg p-3 flex justify-between items-center">
-                                        <div>
-                                            <p className="text-white font-semibold">{song.name}</p>
-                                            <p className="text-gray-400 text-sm">{song.artists}</p>
-                                        </div>
-                                        <span className="text-green-400 text-sm">
-                                            {matches.sharedSongs.find(s => s.songId === song.id)?.count} members
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-gray-400">No shared songs yet. Invite more friends!</p>
-                        )}
-                    </div>
-                </div>
-            </div>
-
+            <PartyView
+                partyCode={partyCode}
+                partySession={partySession}
+                matches={matches}
+                playlist={playlist}
+                totalMinutes={totalMinutes}
+                onCreateSpotifyPlaylist={createSpotifyPlaylist}
+                onLeaveParty={() => setView('menu')}
+            />
         );
     }
 }
