@@ -8,7 +8,8 @@ const firebaseConfig = {
     storageBucket: "songclash-26720.firebasestorage.app",
     messagingSenderId: "459543906300",
     appId: "1:459543906300:web:8837a2825b4465d5181479",
-    measurementId: "G-8SGKDCX5KK"
+    measurementId: "G-8SGKDCX5KK",
+    databaseURL: "https://songclash-26720-default-rtdb.firebaseio.com/"
 };
 
 const app = initializeApp(firebaseConfig);
