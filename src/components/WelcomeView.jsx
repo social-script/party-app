@@ -9,7 +9,7 @@ export default function WelcomeView({ onLogin }) {
                 <Music className="w-24 h-24 text-green-400 mx-auto mb-6" />
                 <h1 className="text-6xl font-bold text-white mb-4">Songclash</h1>
                 <p className="text-xl text-gray-300 mb-8">
-                    Connect with friends through your shared music taste. Login with Spotify to automatically group with people who like the same songs!
+                    Discover your musical compatibility. Compare libraries with friends and instantly generate a playlist of the songs you both love.
                 </p>
                 <button
                     onClick={onLogin}
