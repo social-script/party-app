@@ -9,7 +9,7 @@ export default function WelcomeView({ onLogin }) {
                 <Music className="w-24 h-24 text-green-400 mx-auto mb-6" />
                 <h1 className="text-6xl font-bold text-white mb-4">Songclash</h1>
                 <p className="text-xl text-gray-300 mb-8">
-                    Discover your musical compatibility. Compare libraries with friends and instantly generate a playlist of the songs you both love.
+                    Songclash is a music matcher that analyses your playlists to find common ground with friends. Create a session, invite friends, and generate a shared-song playlist you all enjoy.
                 </p>
                 <button
                     onClick={onLogin}
