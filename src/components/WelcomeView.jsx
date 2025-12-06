@@ -13,10 +13,10 @@ export default function WelcomeView({ onLogin }) {
                 </p>
                 <button
                     onClick={onLogin}
-                    className="bg-spotify-green hover:bg-[#1ed760] text-spotify-black font-bold py-4 px-8 rounded-full text-lg transition-all transform hover:scale-105 flex items-center justify-center gap-3 mx-auto"
+                    className="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-full text-lg transition-all transform hover:scale-105 flex items-center justify-center gap-3 mx-auto"
                 >
-                    <img src={spotifyIcon} alt="Spotify" className="w-8 h-8" />
-                    Login with Spotify
+                    <Music className="w-8 h-8" />
+                    Login with Apple Music
                 </button>
             </div>
         </div>

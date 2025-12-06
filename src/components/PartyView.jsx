@@ -78,11 +78,11 @@ export default function PartyView({
                         {playlist.length > 0 && (
                             <button
                                 onClick={onCreateSpotifyPlaylist}
-                                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold transition-all"
-                                title="Join my Songclash Party!"
+                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold transition-all"
+                                title="Save to Apple Music Library"
                             >
                                 <PlusCircle className="w-4 h-4" />
-                                Save to Spotify
+                                Save to Apple Music
                             </button>
                         )}
                     </div>
@@ -105,7 +105,7 @@ export default function PartyView({
                     )}
                 </div>
                 <div className="mt-8 text-center">
-                    <p className="text-gray-500 text-sm">Metadata provided by Spotify</p>
+                    <p className="text-gray-500 text-sm">Metadata provided by Apple Music</p>
                 </div>
             </div>
         </div>
